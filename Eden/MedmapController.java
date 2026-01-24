@@ -1,49 +1,128 @@
-  package com.medmap.jar;
+package com.medmap.medmap;
 
-public class MedmapController {
-    package com.medmap;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.medmap.medmap.repository.InventoryRepository;
+import com.medmap.medmap.repository.MedicineRepository;
+import com.medmap.medmap.repository.PharmacyRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Controller
-public class MedmapController {
+public class MedMapController {
 
-    @Autowired
-    private MedicineRepository medicineRepository;
+    private final PharmacyRepository pharmacyRepo;
+    private final MedicineRepository medicineRepo;
+    private final InventoryRepository inventoryRepo;
 
-    // This shows the home page
+    public MedMapController(
+            PharmacyRepository pharmacyRepo,
+            MedicineRepository medicineRepo,
+            InventoryRepository inventoryRepo
+    ) {
+        this.pharmacyRepo = pharmacyRepo;
+        this.medicineRepo = medicineRepo;
+        this.inventoryRepo = inventoryRepo;
+    }
+
+    // ================= USER PAGE =================
+
     @GetMapping("/")
-    public String index() {
+    public String home(Model model) {
+        model.addAttribute("cities",
+                pharmacyRepo.findAll()
+                        .stream()
+                        .map(Pharmacy::getCity)
+                        .distinct()
+                        .toList());
+
+        model.addAttribute("areas",
+                pharmacyRepo.findAll()
+                        .stream()
+                        .map(Pharmacy::getArea)
+                        .distinct()
+                        .toList());
+
+        model.addAttribute("medicines", medicineRepo.findAll());
+
         return "index";
     }
 
-    // This handles the search for "A.A" or other cities
-    @PostMapping("/search")
-    public String search(@RequestParam String city, Model model) {
-        List<Medicine> results = medicineRepository.findByCity(city);
+    @GetMapping("/search")
+    public String search(
+            @RequestParam String city,
+            @RequestParam String area,
+            @RequestParam String medicine,
+            Model model
+    ) {
+        var results =
+                inventoryRepo.findByPharmacyCityAndPharmacyAreaAndMedicineName(
+                        city, area, medicine);
+
         model.addAttribute("results", results);
-        model.addAttribute("userCity", city);
         return "results";
     }
 
-    // This shows the upload page for pharmacies
-    @GetMapping("/upload")
-    public String uploadPage() {
-        return "upload";
+    // ================= ADMIN PAGE =================
+
+    @GetMapping("/admin")
+    public String admin(Model model) {
+        model.addAttribute("pharmacies", pharmacyRepo.findAll());
+        model.addAttribute("medicines", medicineRepo.findAll());
+        return "admin";
     }
 
-    // This saves the pharmacy's medicine data
-    @PostMapping("/save")
-    public String saveMedicine(@ModelAttribute Medicine medicine) {
-        medicine.setCategory("Blood Pressure"); // Keeps the scope small
-        medicineRepository.save(medicine);
-        return "redirect:/upload?success";
+    @PostMapping("/add-pharmacy")
+    public String addPharmacy(
+            @RequestParam String name,
+            @RequestParam String city,
+            @RequestParam String area,
+            @RequestParam String phone,
+            @RequestParam String email
+    ) {
+        pharmacyRepo.save(
+                new Pharmacy(name, city, area, phone, email)
+        );
+        return "redirect:/admin";
     }
+
+    @PostMapping("/add-medicine")
+    public String addMedicine(@RequestParam String name) {
+        if (medicineRepo.findByName(name) == null) {
+            medicineRepo.save(new Medicine(name));
+        }
+        return "redirect:/admin";
+    }
+
+    @PostMapping("/update-inventory")
+public String updateInventory(
+        @RequestParam Long pharmacyId,
+        @RequestParam Long medicineId,
+        @RequestParam int quantity,
+        @RequestParam double price
+) {
+    var pharmacy = pharmacyRepo.findById(pharmacyId).orElse(null);
+    var medicine = medicineRepo.findById(medicineId).orElse(null);
+
+    if (pharmacy != null && medicine != null) {
+
+        Inventory existing =
+                inventoryRepo.findByPharmacyIdAndMedicineId(pharmacyId, medicineId);
+
+        if (existing != null) {
+            // 🔁 REPLACE old values
+            existing.setQuantity(quantity);
+            existing.setPrice(price);
+            inventoryRepo.save(existing);
+        } else {
+            // ➕ Create new inventory
+            inventoryRepo.save(
+                    new Inventory(pharmacy, medicine, quantity, price)
+            );
+        }
+    }
+    return "redirect:/admin";
 }
+}
+    
    
    
