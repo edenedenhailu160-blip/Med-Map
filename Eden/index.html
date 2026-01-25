@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Results</title>
+</head>
+<body>
+
+<h2>Search Results</h2>
+
+<div th:if="${results.isEmpty()}">
+    <p style="color:red; font-weight:bold;">❌ Out of stock</p>
+    <a href="/">⬅️ Back to Search</a>
+</div>
+
+<table th:if="${!results.isEmpty()}" border="1">
+    <tr>
+        <th>Pharmacy</th>
+        <th>City</th>
+        <th>Area</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Medicine</th>
+        <th>Quantity</th>
+        <th>Price</th>
+    </tr>
+
+    <tr th:each="r : ${results}">
+        <td th:text="${r.pharmacy.name}"></td>
+        <td th:text="${r.pharmacy.city}"></td>
+        <td th:text="${r.pharmacy.area}"></td>
+        <td th:text="${r.pharmacy.phone}"></td>
+        <td th:text="${r.pharmacy.email}"></td>
+        <td th:text="${r.medicine.name}"></td>
+        <td th:text="${r.quantity}"></td>
+        <td th:text="${r.price}"></td>
+    </tr>
+</table>
+
+</body>
+</html>
