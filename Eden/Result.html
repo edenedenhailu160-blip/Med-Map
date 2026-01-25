@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>MedMap - Search</title>
+</head>
+<body>
+
+<h2>Search Medicine</h2>
+
+<form action="/search" method="get">
+
+    <label>City:</label>
+    <select name="city" required>
+        <option th:each="c : ${cities}"
+                th:value="${c}"
+                th:text="${c}">
+        </option>
+    </select>
+    <br><br>
+
+    <label>Area:</label>
+    <select name="area" required>
+        <option th:each="a : ${areas}"
+                th:value="${a}"
+                th:text="${a}">
+        </option>
+    </select>
+    <br><br>
+
+    <label>Medicine:</label>
+    <select name="medicine" required>
+        <option th:each="m : ${medicines}"
+                th:value="${m.name}"
+                th:text="${m.name}">
+        </option>
+    </select>
+    <br><br>
+
+    <button type="submit">Search</button>
+</form>
+
+</body>
+</html>
